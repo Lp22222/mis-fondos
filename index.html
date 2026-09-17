@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.json">
+<title>Mis Fondos</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f3f4f6;color:#111827}
+.wrap{max-width:720px;margin:auto;padding:18px}
+h1{margin:8px 0 4px}.sub{color:#6b7280;margin-bottom:18px}
+.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #0001}
+.name{font-weight:700}.isin,.date,.note{font-size:12px;color:#6b7280}
+.value{font-size:25px;font-weight:700;margin-top:12px}
+button{width:100%;padding:13px;border:0;border-radius:12px;background:#111827;color:#fff;font-size:16px;margin:8px 0 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Mis Fondos</h1>
+<div class="sub">Valor liquidativo</div>
+<button onclick="loadData()">Actualizar</button>
+<div id="funds"></div>
+<div class="note">Aplicación preparada para GitHub Pages.</div>
+</div>
+<script>
+const funds=[
+["AB Select US Equity Portfolio","LU1404935469"],
+["Robeco QI Global Momentum","LU1048590381"],
+["Robeco Asia-Pacific","LU0084617165"],
+["M&G European Strategic Value","LU1670707527"]
+];
+function render(d){
+document.getElementById("funds").innerHTML=d.map(f=>`
+<div class="card">
+<div class="name">${f.name}</div>
+<div class="isin">${f.isin}</div>
+<div class="value">${f.nav==null?"—":Number(f.nav).toFixed(2)+" €"}</div>
+<div class="date">${f.date?"Fecha: "+f.date:"Sin dato todavía"}</div>
+</div>`).join("");
+}
+async function loadData(){
+try{
+const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
+if(!r.ok)throw new Error();
+render(await r.json());
+}catch(e){
+render(funds.map(x=>({name:x[0],isin:x[1],nav:null,date:null})));
+}}
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+loadData();
+</script>
+</body>
+</html>
