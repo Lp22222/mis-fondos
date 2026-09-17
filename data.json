@@ -1,0 +1,26 @@
+[
+  {
+    "name": "AB Select US Equity Portfolio",
+    "isin": "LU1404935469",
+    "nav": null,
+    "date": null
+  },
+  {
+    "name": "Robeco QI Global Momentum",
+    "isin": "LU1048590381",
+    "nav": null,
+    "date": null
+  },
+  {
+    "name": "Robeco Asia-Pacific",
+    "isin": "LU0084617165",
+    "nav": null,
+    "date": null
+  },
+  {
+    "name": "M&G European Strategic Value",
+    "isin": "LU1670707527",
+    "nav": null,
+    "date": null
+  }
+]
