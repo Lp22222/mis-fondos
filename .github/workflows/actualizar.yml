@@ -16,21 +16,72 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Diagnostico
+      - name: Obtener valores liquidativos
         run: |
           python - <<'PY'
-          import requests
+          import requests, re, json
 
-          url = "https://www.finect.com/fondos-inversion/LU1404935469-Ab_select_us_equity_w_eur"
+          fondos = [
+              {
+                  "name": "AB Select US Equity Portfolio",
+                  "isin": "LU1404935469",
+                  "url": "https://www.finect.com/fondos-inversion/LU1404935469-Ab_select_us_equity_w_eur"
+              },
+              {
+                  "name": "Robeco QI Global Momentum",
+                  "isin": "LU1048590381",
+                  "url": "https://www.finect.com/fondos-inversion/LU1048590381-Robeco_qi_global_momentum_equities_d_"
+              },
+              {
+                  "name": "Robeco Asia-Pacific",
+                  "isin": "LU0084617165",
+                  "url": "https://www.finect.com/fondos-inversion/LU0084617165-Robeco_asiapacific_equities_d_"
+              },
+              {
+                  "name": "M&G European Strategic Value",
+                  "isin": "LU1670707527",
+                  "url": "https://www.finect.com/fondos-inversion/LU1670707527-Mg_lux_eurp_strat_val_a_eur_acc"
+              }
+          ]
+
           headers = {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
           }
-          r = requests.get(url, headers=headers, timeout=30)
-          html = r.text
 
-          idx = html.find("valor liquidativo")
-          print("POSICION:", idx)
-          print("---FRAGMENTO---")
-          print(html[idx-600:idx+200])
-          print("---FIN FRAGMENTO---")
+          resultados = []
+
+          for f in fondos:
+              r = requests.get(f["url"], headers=headers, timeout=30)
+              r.raise_for_status()
+              html = r.text
+
+              patron = r'<span>([\d.,]+)</span><span>€</span>.*?<time dateTime="[^"]+">([\d/]+)</time>'
+
+              m = re.search(patron, html, re.S)
+
+              if not m:
+                  raise Exception("No se pudo encontrar el NAV de " + f["isin"])
+
+              nav = float(m.group(1).replace(".", "").replace(",", "."))
+              fecha = m.group(2)
+
+              resultados.append({
+                  "name": f["name"],
+                  "isin": f["isin"],
+                  "nav": nav,
+                  "date": fecha
+              })
+
+          with open("data.json", "w", encoding="utf-8") as archivo:
+              json.dump(resultados, archivo, ensure_ascii=False, indent=2)
+
+          print(json.dumps(resultados, ensure_ascii=False, indent=2))
           PY
+
+      - name: Guardar actualización
+        run: |
+          git config user.name "Mis Fondos Bot"
+          git config user.email "actions@github.com"
+          git add data.json
+          git diff --cached --quiet || git commit -m "Actualizar valores de fondos"
+          git push
