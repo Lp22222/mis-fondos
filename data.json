@@ -2,25 +2,25 @@
   {
     "name": "AB Select US Equity Portfolio",
     "isin": "LU1404935469",
-    "nav": 56.72,
-    "date": "25/09/2026"
+    "nav": 56.47,
+    "date": "29/09/2026"
   },
   {
     "name": "Robeco QI Global Momentum",
     "isin": "LU1048590381",
-    "nav": 348.6,
-    "date": "24/09/2026"
+    "nav": 348.48,
+    "date": "28/09/2026"
   },
   {
     "name": "Robeco Asia-Pacific",
     "isin": "LU0084617165",
-    "nav": 358.28,
-    "date": "24/09/2026"
+    "nav": 353.67,
+    "date": "28/09/2026"
   },
   {
     "name": "M&G European Strategic Value",
     "isin": "LU1670707527",
-    "nav": 22.81,
-    "date": "25/09/2026"
+    "nav": 22.9,
+    "date": "29/09/2026"
   }
 ]
