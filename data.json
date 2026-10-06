@@ -8,19 +8,19 @@
   {
     "name": "Robeco QI Global Momentum",
     "isin": "LU1048590381",
-    "nav": 352.93,
-    "date": "1/10/2026"
+    "nav": 355.85,
+    "date": "2/10/2026"
   },
   {
     "name": "Robeco Asia-Pacific",
     "isin": "LU0084617165",
-    "nav": 358.32,
-    "date": "1/10/2026"
+    "nav": 361.05,
+    "date": "2/10/2026"
   },
   {
     "name": "M&G European Strategic Value",
     "isin": "LU1670707527",
-    "nav": 22.26,
-    "date": "2/10/2026"
+    "nav": 22.32,
+    "date": "5/10/2026"
   }
 ]
