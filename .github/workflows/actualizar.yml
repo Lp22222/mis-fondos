@@ -1,3 +1,4 @@
+
 name: Actualizar valores de fondos
 
 on:
@@ -41,6 +42,16 @@ jobs:
                   "name": "M&G European Strategic Value",
                   "isin": "LU1670707527",
                   "url": "https://www.finect.com/fondos-inversion/LU1670707527-Mg_lux_eurp_strat_val_a_eur_acc"
+              },
+              {
+                  "name": "BINDEX USA INDICE FI",
+                  "isin": "ES0114565007",
+                  "url": "https://www.finect.com/fondos-inversion/ES0114565007-Bindex_usa_indice_fi"
+              },
+              {
+                  "name": "Invesco Pan European Equity Fund S Accumulation",
+                  "isin": "LU1848768336",
+                  "url": "https://www.finect.com/fondos-inversion/LU1848768336-Invesco_pan_european_equity_s_acc"
               }
           ]
 
@@ -60,7 +71,7 @@ jobs:
               texto = re.sub(r'\s+', ' ', texto)
 
               patron = (
-                  r'([\d.]+,\d{2})\s*€.{0,500}?'
+                  r'([\d.]+,\d{2,6})\s*€.{0,500}?'
                   r'Fecha de (?:actualización )?valor liquidativo'
                   r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})'
               )
@@ -83,9 +94,12 @@ jobs:
                   "date": fecha
               })
 
+              print(f"OK: {f['name']} - NAV: {nav} - Fecha: {fecha}")
+
           with open("data.json", "w", encoding="utf-8") as archivo:
               json.dump(resultados, archivo, ensure_ascii=False, indent=2)
 
+          print("Actualizados correctamente los seis fondos.")
           print(json.dumps(resultados, ensure_ascii=False, indent=2))
           PY
 
