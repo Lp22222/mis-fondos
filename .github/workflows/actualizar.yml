@@ -65,27 +65,36 @@ jobs:
               r = requests.get(f["url"], headers=headers, timeout=30)
               r.raise_for_status()
 
-              texto = html.unescape(
-                  re.sub(r'<[^>]+>', ' ', r.text)
+              
+          texto = html.unescape(
+              re.sub(r'<[^>]+>', ' ', r.text)
+          )
+          texto = re.sub(r'\s+', ' ', texto)
+
+          # Buscar el NAV y la fecha por separado
+          m_nav = re.search(
+              r'([\d.]+,\d{2,6})\s*€',
+              texto
+          )
+
+          m_fecha = re.search(
+              r'Fecha de (?:actualización )?valor liquidativo'
+              r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})',
+              texto,
+              re.I
+          )
+
+          if not m_nav or not m_fecha:
+              raise Exception(
+                  f"No se encontró NAV o fecha para {f['isin']}. "
+                  f"HTTP {r.status_code}. "
+                  f"Revisar la página de Finect."
               )
-              texto = re.sub(r'\s+', ' ', texto)
 
-              patron = (
-                  r'([\d.]+,\d{2,6})\s*€.{0,500}?'
-                  r'Fecha de (?:actualización )?valor liquidativo'
-                  r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})'
-              )
-
-              m = re.search(patron, texto, re.I)
-
-              if not m:
-                  raise Exception(
-                      "No se pudo encontrar el NAV y su fecha de "
-                      + f["isin"] + ". Revisar HTML de Finect."
-                  )
-
-              nav = float(m.group(1).replace(".", "").replace(",", "."))
-              fecha = m.group(2)
+          nav = float(
+              m_nav.group(1).replace(".", "").replace(",", ".")
+          )
+          fecha = m_fecha.group(1)
 
               resultados.append({
                   "name": f["name"],
