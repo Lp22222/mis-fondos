@@ -61,40 +61,44 @@ jobs:
 
           resultados = []
 
+          
+          with open("data.json", "w", encoding="utf-8") as archivo:
+              json.dump(resultados, archivo, ensure_ascii=False, indent=2)
+
+          print("Actualizados correctamente los seis fondos.")
+          print(json.dumps(resultados, ensure_ascii=False, indent=2))
+          PY
+
           for f in fondos:
               r = requests.get(f["url"], headers=headers, timeout=30)
               r.raise_for_status()
 
-              
-          texto = html.unescape(
-              re.sub(r'<[^>]+>', ' ', r.text)
-          )
-          texto = re.sub(r'\s+', ' ', texto)
+              texto = html.unescape(
+                  re.sub(r'<[^>]+>', ' ', r.text)
+              )
+              texto = re.sub(r'\s+', ' ', texto)
 
-          # Buscar el NAV y la fecha por separado
-          m_nav = re.search(
-              r'([\d.]+,\d{2,6})\s*€',
-              texto
-          )
-
-          m_fecha = re.search(
-              r'Fecha de (?:actualización )?valor liquidativo'
-              r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})',
-              texto,
-              re.I
-          )
-
-          if not m_nav or not m_fecha:
-              raise Exception(
-                  f"No se encontró NAV o fecha para {f['isin']}. "
-                  f"HTTP {r.status_code}. "
-                  f"Revisar la página de Finect."
+              m_nav = re.search(
+                  r'([\d.]+,\d{2,6})\s*€',
+                  texto
               )
 
-          nav = float(
-              m_nav.group(1).replace(".", "").replace(",", ".")
-          )
-          fecha = m_fecha.group(1)
+              m_fecha = re.search(
+                  r'Fecha de (?:actualización )?valor liquidativo'
+                  r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})',
+                  texto,
+                  re.I
+              )
+
+              if not m_nav or not m_fecha:
+                  raise Exception(
+                      f"No se encontró NAV o fecha para {f['isin']}"
+                  )
+
+              nav = float(
+                  m_nav.group(1).replace(".", "").replace(",", ".")
+              )
+              fecha = m_fecha.group(1)
 
               resultados.append({
                   "name": f["name"],
@@ -104,14 +108,7 @@ jobs:
               })
 
               print(f"OK: {f['name']} - NAV: {nav} - Fecha: {fecha}")
-
-          with open("data.json", "w", encoding="utf-8") as archivo:
-              json.dump(resultados, archivo, ensure_ascii=False, indent=2)
-
-          print("Actualizados correctamente los seis fondos.")
-          print(json.dumps(resultados, ensure_ascii=False, indent=2))
-          PY
-
+              
       - name: Guardar actualización
         run: |
           git config user.name "Mis Fondos Bot"
