@@ -20,7 +20,10 @@ jobs:
       - name: Obtener valores liquidativos
         run: |
           python - <<'PY'
-          import requests, re, json, html
+          import requests
+          import re
+          import json
+          import html
 
           fondos = [
               {
@@ -61,16 +64,14 @@ jobs:
 
           resultados = []
 
-          
-          with open("data.json", "w", encoding="utf-8") as archivo:
-              json.dump(resultados, archivo, ensure_ascii=False, indent=2)
-
-          print("Actualizados correctamente los seis fondos.")
-          print(json.dumps(resultados, ensure_ascii=False, indent=2))
-          PY
-
           for f in fondos:
-              r = requests.get(f["url"], headers=headers, timeout=30)
+              print("Consultando:", f["name"])
+
+              r = requests.get(
+                  f["url"],
+                  headers=headers,
+                  timeout=30
+              )
               r.raise_for_status()
 
               texto = html.unescape(
@@ -92,12 +93,15 @@ jobs:
 
               if not m_nav or not m_fecha:
                   raise Exception(
-                      f"No se encontró NAV o fecha para {f['isin']}"
+                      "No se encontró NAV o fecha para "
+                      + f["isin"]
+                      + ". Revisar respuesta de Finect."
                   )
 
               nav = float(
                   m_nav.group(1).replace(".", "").replace(",", ".")
               )
+
               fecha = m_fecha.group(1)
 
               resultados.append({
@@ -107,8 +111,27 @@ jobs:
                   "date": fecha
               })
 
-              print(f"OK: {f['name']} - NAV: {nav} - Fecha: {fecha}")
-              
+              print(
+                  "OK:",
+                  f["name"],
+                  "- NAV:",
+                  nav,
+                  "- Fecha:",
+                  fecha
+              )
+
+          with open("data.json", "w", encoding="utf-8") as archivo:
+              json.dump(
+                  resultados,
+                  archivo,
+                  ensure_ascii=False,
+                  indent=2
+              )
+
+          print("Actualizados correctamente los seis fondos.")
+          print(json.dumps(resultados, ensure_ascii=False, indent=2))
+          PY
+
       - name: Guardar actualización
         run: |
           git config user.name "Mis Fondos Bot"
@@ -122,5 +145,4 @@ jobs:
 
           git pull --rebase origin main
           git push origin main
-
-      
+          
