@@ -1,148 +1,82 @@
+python - <<'PY'
+import requests, re, json, html
 
-name: Actualizar valores de fondos
+fondos = [
+    {
+        "name": "AB Select US Equity Portfolio",
+        "isin": "LU1404935469",
+        "url": "https://www.finect.com/fondos-inversion/LU1404935469-Ab_select_us_equity_w_eur"
+    },
+    {
+        "name": "Robeco QI Global Momentum",
+        "isin": "LU1048590381",
+        "url": "https://www.finect.com/fondos-inversion/LU1048590381-Robeco_qi_global_momentum_equities_d_"
+    },
+    {
+        "name": "Robeco Asia-Pacific",
+        "isin": "LU0084617165",
+        "url": "https://www.finect.com/fondos-inversion/LU0084617165-Robeco_asiapacific_equities_d_"
+    },
+    {
+        "name": "M&G European Strategic Value",
+        "isin": "LU1670707527",
+        "url": "https://www.finect.com/fondos-inversion/LU1670707527-Mg_lux_eurp_strat_val_a_eur_acc"
+    },
+    {
+        "name": "BINDEX USA INDICE FI",
+        "isin": "ES0114565007",
+        "url": "https://www.finect.com/fondos-inversion/ES0114565007-Bindex_usa_indice_fi"
+    },
+    {
+        "name": "Invesco Pan European Equity Fund S Accumulation",
+        "isin": "LU1848768336",
+        "url": "https://www.finect.com/fondos-inversion/LU1848768336-Invesco_pan_european_equity_s_acc"
+    }
+]
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 7 * * *"
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36"
+}
 
-permissions:
-  contents: write
+resultados = []
 
-jobs:
-  actualizar:
-    runs-on: ubuntu-latest
+for f in fondos:
+    r = requests.get(f["url"], headers=headers, timeout=30)
+    r.raise_for_status()
 
-    steps:
-      - name: Descargar repositorio
-        uses: actions/checkout@v4
+    texto = html.unescape(re.sub(r'<[^>]+>', ' ', r.text))
+    texto = re.sub(r'\s+', ' ', texto)
 
-      - name: Obtener valores liquidativos
-        run: |
-          python - <<'PY'
-          import requests
-          import re
-          import json
-          import html
+    m_nav = re.search(r'([\d.]+,\d{2,6})\s*€', texto)
 
-          fondos = [
-              {
-                  "name": "AB Select US Equity Portfolio",
-                  "isin": "LU1404935469",
-                  "url": "https://www.finect.com/fondos-inversion/LU1404935469-Ab_select_us_equity_w_eur"
-              },
-              {
-                  "name": "Robeco QI Global Momentum",
-                  "isin": "LU1048590381",
-                  "url": "https://www.finect.com/fondos-inversion/LU1048590381-Robeco_qi_global_momentum_equities_d_"
-              },
-              {
-                  "name": "Robeco Asia-Pacific",
-                  "isin": "LU0084617165",
-                  "url": "https://www.finect.com/fondos-inversion/LU0084617165-Robeco_asiapacific_equities_d_"
-              },
-              {
-                  "name": "M&G European Strategic Value",
-                  "isin": "LU1670707527",
-                  "url": "https://www.finect.com/fondos-inversion/LU1670707527-Mg_lux_eurp_strat_val_a_eur_acc"
-              },
-              {
-                  "name": "BINDEX USA INDICE FI",
-                  "isin": "ES0114565007",
-                  "url": "https://www.finect.com/fondos-inversion/ES0114565007-Bindex_usa_indice_fi"
-              },
-              {
-                  "name": "Invesco Pan European Equity Fund S Accumulation",
-                  "isin": "LU1848768336",
-                  "url": "https://www.finect.com/fondos-inversion/LU1848768336-Invesco_pan_european_equity_s_acc"
-              }
-          ]
+    m_fecha = re.search(
+        r'Fecha de (?:actualización )?valor liquidativo'
+        r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})',
+        texto,
+        re.I
+    )
 
-          headers = {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36"
-          }
+    if not m_nav or not m_fecha:
+        raise Exception(
+            f"No se encontró NAV o fecha para {f['isin']}. "
+            f"HTTP {r.status_code}. Revisar Finect."
+        )
 
-          resultados = []
+    nav = float(m_nav.group(1).replace(".", "").replace(",", "."))
+    fecha = m_fecha.group(1)
 
-          for f in fondos:
-              print("Consultando:", f["name"])
+    resultados.append({
+        "name": f["name"],
+        "isin": f["isin"],
+        "nav": nav,
+        "date": fecha
+    })
 
-              r = requests.get(
-                  f["url"],
-                  headers=headers,
-                  timeout=30
-              )
-              r.raise_for_status()
+    print(f"OK: {f['name']} - NAV: {nav} - Fecha: {fecha}")
 
-              texto = html.unescape(
-                  re.sub(r'<[^>]+>', ' ', r.text)
-              )
-              texto = re.sub(r'\s+', ' ', texto)
+with open("data.json", "w", encoding="utf-8") as archivo:
+    json.dump(resultados, archivo, ensure_ascii=False, indent=2)
 
-              m_nav = re.search(
-                  r'([\d.]+,\d{2,6})\s*€',
-                  texto
-              )
-
-              m_fecha = re.search(
-                  r'Fecha de (?:actualización )?valor liquidativo'
-                  r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})',
-                  texto,
-                  re.I
-              )
-
-              if not m_nav or not m_fecha:
-                  raise Exception(
-                      "No se encontró NAV o fecha para "
-                      + f["isin"]
-                      + ". Revisar respuesta de Finect."
-                  )
-
-              nav = float(
-                  m_nav.group(1).replace(".", "").replace(",", ".")
-              )
-
-              fecha = m_fecha.group(1)
-
-              resultados.append({
-                  "name": f["name"],
-                  "isin": f["isin"],
-                  "nav": nav,
-                  "date": fecha
-              })
-
-              print(
-                  "OK:",
-                  f["name"],
-                  "- NAV:",
-                  nav,
-                  "- Fecha:",
-                  fecha
-              )
-
-          with open("data.json", "w", encoding="utf-8") as archivo:
-              json.dump(
-                  resultados,
-                  archivo,
-                  ensure_ascii=False,
-                  indent=2
-              )
-
-          print("Actualizados correctamente los seis fondos.")
-          print(json.dumps(resultados, ensure_ascii=False, indent=2))
-          PY
-
-      - name: Guardar actualización
-        run: |
-          git config user.name "Mis Fondos Bot"
-          git config user.email "actions@github.com"
-
-          git add data.json
-
-          if ! git diff --cached --quiet; then
-            git commit -m "Actualizar valores de fondos"
-          fi
-
-          git pull --rebase origin main
-          git push origin main
-          
+print("Actualizados correctamente los seis fondos.")
+print(json.dumps(resultados, ensure_ascii=False, indent=2))
+PY
