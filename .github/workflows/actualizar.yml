@@ -88,19 +88,20 @@ jobs:
               )
 
               m_fecha = re.search(
-                  r'(?:Datos\s+a|Fecha\s+de\s+(?:actualización\s+)?valor\s+liquidativo)'
-                  r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})',
-                  texto,
-                  re.I
+    r'(?:Datos\s+a|Fecha\s+de\s+(?:actualización\s+)?valor\s+liquidativo)'
+    r'\s*:?\s*(\d{1,2}/\d{1,2}/\d{4})',
+    texto,
+    re.I
+)
               )
 
               if not m_nav or not m_fecha:
-                  print("Texto recibido de Finect:")
-                  print(texto[:1500])
-                  raise Exception(
-                      f"No se encontró NAV o fecha para {f['isin']}. "
-                      f"HTTP {r.status_code}"
-                  )
+    print("Texto recibido de Finect:")
+    print(texto[:3000])
+    raise Exception(
+        f"No se encontró NAV o fecha para {f['isin']}. "
+        f"HTTP {r.status_code}"
+    )
 
               nav = float(
                   m_nav.group(1).replace(".", "").replace(",", ".")
